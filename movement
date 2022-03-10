@@ -28,25 +28,26 @@ class Wheel:
         elif self.pos.x <= 0:
             self.pos.x = WIDTH
 class Balls:
-    def __init__(self ):
+    def __init__(self , list_balls , radius ):
         self.vel = Vector()
-        self.radius = random.randint(10, 50)
         self.colour = 'green'
         self.on =False
+        self.list_balls = list_balls
+        self.radius = radius
 
 
     def draw (self, canvas):
-        number_balls = random.randint(0, 10)
-        pos = Vector(0, 0)
-        if self.on == False:
-            ball_list = []
-            for i in range(0 , number_balls):
-                X = random.randint(0, WIDTH)
-                Y = random.randint(0, HEIGHT)
-                pos = Vector(X, Y)
-                ball_list.append(pos)
-        self.on = True
-        for z in ball_list:
+        #number_balls = random.randint(0, 10)
+        #pos = Vector(0, 0)
+        #if self.on == False:
+            #ball_list = []
+            #for i in range(0 , number_balls):
+               # X = random.randint(0, WIDTH)
+               # Y = random.randint(0, HEIGHT)
+               # pos = Vector(X, Y)
+               # ball_list.append(pos)
+        #self.on = True
+        for z in self.list_balls:
             canvas.draw_circle(z.get_p(), self.radius, 1, self.colour, self.colour)
             
 #	def update(self):
@@ -99,21 +100,26 @@ class Interaction:
             self.wheel.vel.add(Vector(0, -1))
         if self.keyboard.down:
             self.wheel.vel.add(Vector(0, 1))
+            
+            
+            
 
-
-kbd = Keyboard()
-X = random.randint(0, WIDTH)
-Y = random.randint(0, HEIGHT)
-wheel = Wheel(Vector(WIDTH / 2, HEIGHT - 40), 40)
-balls = Balls()
-inter = Interaction(wheel, kbd)
 list_balls = []
-def timer_handler():
-    X = random.randint(0, WIDTH)
-    Y = random.randint(0, HEIGHT)
-    position = Vector(X, Y)
-    b = Ball(position)
-    ball_list.append(b)
+number_balls = random.randint(2, 10)
+for i in range(0 , number_balls):
+    radius = random.randint(10, 20)
+    X = random.randint(0, WIDTH - radius)
+    Y = random.randint(0, HEIGHT - radius)
+    pos = Vector(X, Y)
+    list_balls.append(pos)
+    
+   
+    
+kbd = Keyboard()
+wheel = Wheel(Vector(WIDTH / 2, HEIGHT - 40), 40)
+balls = Balls(list_balls  , radius)
+inter = Interaction(wheel, kbd)
+
 
 
 
@@ -129,3 +135,4 @@ frame.set_draw_handler(draw)
 frame.set_keydown_handler(kbd.keyDown)
 frame.set_keyup_handler(kbd.keyUp)
 frame.start()
+
