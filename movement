@@ -14,7 +14,7 @@ class Wheel:
     def __init__(self, pos, radius=10):
         self.pos = pos
         self.vel = Vector()
-        self.radius = max(radius, 10)
+        self.radius = 10
         self.colour = 'Red'
 
     def draw(self, canvas):
@@ -28,12 +28,12 @@ class Wheel:
         elif self.pos.x <= 0:
             self.pos.x = WIDTH
 class Balls:
-    def __init__(self , list_balls , radius ):
+    def __init__(self , list_balls , list_radius):
         self.vel = Vector()
         self.colour = 'green'
         self.on =False
         self.list_balls = list_balls
-        self.radius = radius
+        self.list_radius = list_radius
 
 
     def draw (self, canvas):
@@ -47,8 +47,12 @@ class Balls:
                # pos = Vector(X, Y)
                # ball_list.append(pos)
         #self.on = True
-        for z in self.list_balls:
-            canvas.draw_circle(z.get_p(), self.radius, 1, self.colour, self.colour)
+        for z , g in zip(self.list_balls , self.list_radius):
+            if g > 10:
+                self.colour = 'Blue'
+            else:
+                self.colour = 'Green'
+            canvas.draw_circle(z.get_p(), g, 1, self.colour, self.colour)
             
 #	def update(self):
 
@@ -105,20 +109,38 @@ class Interaction:
             
 
 list_balls = []
+list_radius= []
 number_balls = random.randint(2, 10)
 for i in range(0 , number_balls):
-    radius = random.randint(10, 20)
-    X = random.randint(0, WIDTH - radius)
-    Y = random.randint(0, HEIGHT - radius)
+    radius = random.randint(8 , 20)
+    X = random.randint(0, WIDTH - 20)
+    Y = random.randint(0, HEIGHT - 20)
     pos = Vector(X, Y)
+    list_radius.append(radius)
     list_balls.append(pos)
     
    
     
 kbd = Keyboard()
 wheel = Wheel(Vector(WIDTH / 2, HEIGHT - 40), 40)
-balls = Balls(list_balls  , radius)
+balls = Balls(list_balls , list_radius)
 inter = Interaction(wheel, kbd)
+
+
+
+
+def draw(canvas):
+    inter.update()
+    wheel.update()
+    wheel.draw(canvas)
+    balls.draw(canvas)
+
+
+frame = simplegui.create_frame('Interactions', WIDTH, HEIGHT)
+frame.set_draw_handler(draw)
+frame.set_keydown_handler(kbd.keyDown)
+frame.set_keyup_handler(kbd.keyUp)
+frame.start()
 
 
 
