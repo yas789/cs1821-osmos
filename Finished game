@@ -1,0 +1,395 @@
+from user304_rsf8mD0BOQ_1 import Vector
+try:
+    import simplegui
+    import math
+except ImportError:
+    import SimpleGUICS2Pygame.simpleguics2pygame as simplegui
+import random
+import time
+import codeskulptor
+WIDTH = 1000
+HEIGHT = 500
+MAPWIDTH = 2500
+MAPHEIGHT = 2500
+MODE_GAME = 1
+game_mode = MODE_GAME
+death = False
+true_death = False
+lives = 3
+has_won = False
+level = 1
+total_score = 0
+complete = False
+sprite = simplegui.load_image('https://media.discordapp.net/attachments/955950476761911296/956593475133009940/Untitled_design_9_ccexpress.png')
+death_music = simplegui.load_sound('https://cdn.discordapp.com/attachments/953666431025815633/956854479288930344/Dark_Souls__You_Died__Sound_Effect_128_kbps.mp3')
+music = simplegui.load_sound('https://www.mboxdrive.com/Shenmue%20Original%20Sound%20Track%20A%20New%20Departure%20(128%20kbps).mp3')
+class Player:
+    def __init__(self, pos, radius):
+        self.pos = pos
+        self.vel = Vector()
+        self.radius = radius
+        self.score_pos_x = 0
+        self.radius_image = 18
+    def draw(self, canvas):
+        global total_score, lives, sprite
+        canvas.draw_circle(self.pos.get_p(), self.radius, 3, "Black", "Black")
+        canvas.draw_image(sprite, (290,295), (512,512),self.pos.get_p(), (self.radius_image, self.radius_image)) 
+        if self.score_pos_x >= 100:
+            self.score_pos_x = self.pos.get_p()[0] - (self.radius*.7)
+        else:
+            self.score_pos_x = self.pos.get_p()[0] - (self.radius*.5)
+        self.score_pos_y = self.pos.get_p()[1]
+        if complete != True:
+            canvas.draw_text(str(int(self.radius) - 6), [self.score_pos_x+5, self.score_pos_y+5], self.radius , "White")
+        else:
+            canvas.draw_text("Congratulations! You have won the game!", [210,225], 30, "Gold")
+            canvas.draw_text("Total Score: "+ str(int(total_score)), [210,250], 30, "Gold")
+            canvas.draw_text("Lives Left: "+ str(lives), [210,275], 30, "Gold")
+            canvas.draw_text("Push P to go back to the Main Menu", [210, 300], 30, "Gold")
+        circle_width_r = self.pos.x + self.radius + 1
+        circle_width_l = self.pos.x - self.radius - 1
+        over = False
+        under = False
+        
+        
+    def update(self):
+        self.pos.add(self.vel)
+        self.vel.multiply(0.3)
+        if self.pos.x >= (WIDTH):
+            self.pos.x = 0
+        elif self.pos.x <= 0:
+            self.pos.x = WIDTH
+            
+        elif self.pos.y >= HEIGHT:
+            self.pos.y = 0
+        elif self.pos.y <= 0:
+            self.pos.y = HEIGHT
+        else:
+            pass
+class Balls:
+    def __init__(self , list_balls):
+        self.vel = Vector()
+        self.on = False
+        self.list_of_ball = list_balls
+    def draw (self, canvas):
+       
+        for ball in (self.list_of_ball):
+            self.colour = ball['colour']
+            canvas.draw_circle(ball['pos'].get_p(), ball['radius'], 1 ,self.colour, self.colour)
+            
+class Keyboard:
+    def __init__(self):
+        self.right = False
+        self.left = False
+        self.up = False
+        self.down = False
+        self.space = False
+        self.esc = False
+        self.r = False
+    def keyDown(self, key):
+        if key == simplegui.KEY_MAP['right'] or key == simplegui.KEY_MAP['d']:
+            self.right = True
+        if key == simplegui.KEY_MAP['left'] or key == simplegui.KEY_MAP['a']:
+            self.left = True
+        if key == simplegui.KEY_MAP['up'] or key == simplegui.KEY_MAP['w']:
+            self.up = True
+        if key == simplegui.KEY_MAP['down'] or key == simplegui.KEY_MAP['s']:
+            self.down = True
+        if key == simplegui.KEY_MAP['space']:
+            self.space = True
+        if key == simplegui.KEY_MAP['p']:
+            self.esc = True
+
+    def keyUp(self, key):
+        if key == simplegui.KEY_MAP['right'] or key == simplegui.KEY_MAP['D']:
+            self.right = False
+        if key == simplegui.KEY_MAP['left'] or key == simplegui.KEY_MAP['A']:
+            self.left = False
+        if key == simplegui.KEY_MAP['up'] or key == simplegui.KEY_MAP['W']:
+            self.up = False
+        if key == simplegui.KEY_MAP['down'] or key == simplegui.KEY_MAP['s']:
+            self.down = False
+        if key == simplegui.KEY_MAP['p']:
+            self.esc = False
+
+class Interaction:
+    def __init__(self, player, keyboard, list_balls):
+        self.player = player
+        self.keyboard = keyboard
+        self.list_balls = list_balls
+    def update(self):
+        global death, true_death, has_won, total_score
+        scale = math.floor(self.player.radius)
+        calc = 2
+        if self.keyboard.right:
+            self.player.vel.add(Vector(calc, 0))
+        if self.keyboard.left:
+            self.player.vel.add(Vector(-calc, 0))
+        if self.keyboard.up:
+            self.player.vel.add(Vector(0, -calc))
+        if self.keyboard.down:
+            self.player.vel.add(Vector(0, calc))
+        has_won = True
+        for i in list_balls:
+            if i['radius'] > 1:
+                has_won = False
+            x_position = math.floor(self.player.pos.get_p()[0])
+            y_position = math.floor(self.player.pos.get_p()[1])
+            hitbox = int(self.player.radius)
+            if i['radius'] < self.player.radius:
+                i['colour'] = 'Blue'    
+            for j in list_balls:
+                x_position = math.floor(self.player.pos.get_p()[0])
+                y_position = math.floor(self.player.pos.get_p()[1])        
+                distance = j['pos'].copy().subtract(self.player.pos).length()
+                edge = j['radius'] + self.player.radius
+                if distance <= edge:
+                    if self.player.radius > j['radius']:
+                        if self.player.radius >= 100 and self.player.radius < 200:
+                            self.player.radius += j['radius'] *.2
+                            total_score += j['radius'] *.2
+                            
+                        elif self.player.radius >= 200:
+                            self.player.radius += j['radius'] * 0
+                            total_score += j['radius'] * 0
+                            
+                        else:
+                            self.player.radius += j['radius'] *.5
+                            total_score += j['radius'] *.5
+                            
+                        self.player.radius_image = self.player.radius * 2.5
+                        j['radius'] = 0.00000000000000001
+                        j['colour'] = 'Black'
+                    else:
+                        if lives == 0:
+        
+                            true_death = True
+                            death = True
+                        else:
+                            death = True
+
+        for y in list_balls:
+            for x in list_balls:
+                if y['id'] != x['id']:
+                    edge1 = y['radius'] + x['radius']
+                    distance1 = x['pos'].copy().subtract(y['pos']).length()
+                    if distance1 <= edge1:
+                        if y['radius'] >= x['radius']:
+                            y['radius'] += x['radius'] * .3
+                            x['radius'] = 0.0000000001
+        for o in list_balls:
+            if HEIGHT < (o['radius'] + o['pos'].get_p()[1]):
+                pos1 = o['pos'].get_p()[1]
+                pos1 -= (o['radius']+10)
+            if WIDTH < (o['radius']+o['pos'].get_p()[0]):
+                pos2 = o['pos'].get_p()[0]
+                pos2 += (o['radius']-10)
+            if HEIGHT > (o['radius']+o['pos'].get_p()[1]):
+                pos3 = o['pos'].get_p()[1]
+                pos3 -= (0-o['radius']-10)
+            if WIDTH < (o['radius']+o['pos'].get_p()[0]):
+                pos4 = o['pos'].get_p()[0]
+                pos4 += (o['radius']-10)
+        for p in list_balls:
+            if p['pos'].get_p()[0] + p['radius'] >= (WIDTH):
+                p['pos'].add(Vector(-12, 0))
+            if p['pos'].get_p()[0]-p['radius'] <= 0:
+                p['pos'].add(Vector(12, 0))
+            if p['pos'].get_p()[1] + p['radius'] >= HEIGHT:
+                p['pos'].add(Vector(0, -12))
+            if p['pos'].get_p()[1] - p['radius'] <= 0:
+                p['pos'].add(Vector(0, 12))
+
+list_balls = []            
+def generate():
+    global list_balls, level
+    count = 0
+    if level == 0 or level == 1:
+        min_balls = 22
+        max_balls = 30
+        max_mid_radius = 12
+        min_radius = 12 
+        max_radius = 20
+    elif level == 2:
+        min_balls = 32
+        max_balls = 40
+        max_mid_radius = 15
+        min_radius = 20
+        max_radius = 30
+    elif level == 3:
+        min_balls = 38
+        max_balls = 45
+        max_mid_radius = 15
+        min_radius = 20
+        max_radius = 30
+
+    else:
+        min_balls = 22
+        max_balls = 30
+        max_mid_radius = 12
+        min_radius = 12 
+        max_radius = 20
+        
+    number_balls = random.randint(min_balls, max_balls)
+    for i in range(0 , number_balls):
+        count+=1 
+        if i<=5:
+            radius = random.randint(4 , 5)
+        elif i<=8:
+            radius = random.randint(5, max_mid_radius)
+        else:
+            radius = random.randint(min_radius, max_radius)
+        velocity_x = random.randint(-20,20)
+        velocity_y = random.randint(-20,20)
+        xAxis = random.randint(20, WIDTH - 20)
+        yAxis = random.randint(20, HEIGHT - 20)
+        if yAxis in range(450,470):
+                yAxis -= 50
+        if xAxis in range(240,260):
+                xAxis -= 50
+        pos = Vector(xAxis, yAxis)
+        speed = Vector(velocity_x, velocity_y)
+        if radius >= 6:
+            colour_of_ball = 'Red'
+        else:
+            colour_of_ball = 'Blue'
+        ball_attributes = {'pos': pos, 
+                           'speed': speed,
+                           'radius': radius, 
+                           'colour': colour_of_ball,
+                            'id': count}
+        list_balls.append(ball_attributes)
+
+kbd = Keyboard()
+player = Player(Vector(250, 460), 6)
+balls = Balls(list_balls)
+inter = Interaction(player, kbd, list_balls)
+
+def new_game():
+    global kbd, player, balls, inter
+    player = Player(Vector(WIDTH / 2, HEIGHT - 40), 6)
+    balls = Balls(list_balls)
+    inter = Interaction(player, kbd, list_balls)
+
+message1 = "CS1812 - Osmos"
+message2 = "Press Space to Begin"
+message3 = "Use Cursor Keys or WASD to Move"
+message4 = "By Igli, Belal, Ade, Yassir, Arman"
+message5 = "You Have Died a Terrible Death"
+message6 = "Press SPACE to play again!"
+message7 = "End Credits:"
+message8 = "Fuad Ade"
+generate()
+new_game()
+
+intro = True
+
+def draw(canvas):
+    global MODE_GAME
+    global kbd
+    global death
+    global lives, level, total_score, true_death, intro
+    if kbd.esc == True and true_death == False:
+        true_death = True
+        lives = 4
+        level = 1
+        total_score = 0
+        render_death(canvas)
+        
+    if kbd.space == True:
+        render_game(canvas)  
+    else:
+        if true_death == True:
+            INTRO_TEXT_COLOUR = "Red"
+            canvas.draw_text(death_message1, [300,172], 80, INTRO_TEXT_COLOUR)
+            canvas.draw_text(death_message2, [200,272], 80, INTRO_TEXT_COLOUR)
+            death_music.play()
+            if kbd.esc == True:
+                true_death = False
+      
+            
+        elif true_death == False:
+            render_intro(canvas)
+        
+def render_intro(canvas):
+    global level
+    global game_mode
+    global message1
+    global message2
+    global message3
+    global message4
+    INTRO_TEXT_COLOUR = "Yellow"
+    canvas.draw_text(message1, [300,172], 50, INTRO_TEXT_COLOUR)
+    canvas.draw_text(message3, [200, 220], 40,INTRO_TEXT_COLOUR)
+    canvas.draw_text(message2, [300, 300], 40,INTRO_TEXT_COLOUR)
+    canvas.draw_text(message4, [0, 490], 35 ,INTRO_TEXT_COLOUR)
+def render_game(canvas):
+    global game_mode, death, lives, list_balls, true_death, win_game, has_won, level, total_score
+    if complete != True:
+        canvas.draw_text("Lives left: "+ str(lives)+" on Level: "+str(level)+"/3", [400,25], 20, "White")
+        canvas.draw_text("Current Score: "+ str(int(total_score)), [800,25], 20, "White")
+        music.play()
+    else:
+        end_screen()
+        music.pause()
+    inter.update()
+    player.update()
+    player.draw(canvas)
+    balls.draw(canvas)
+
+    if death == True:
+        render_death(canvas)
+    if has_won == True:
+            has_won = False
+            win_game(canvas)
+              
+def win_game(canvas):
+    global list_balls, message6, lives, death
+    INTRO_TEXT_COLOUR1 = "Purple"
+    if level < 4:
+        level_up(canvas)
+    
+def level_up(canvas):
+    global list_balls, level, complete
+    list_balls = []
+    level += 1
+    generate()
+    if level == 4:
+        complete = True
+    else:
+        new_game()
+        render_game(canvas)
+    
+def end_screen():
+    global list_balls
+    list_balls = []
+    for s in range (0, int(player.radius)):
+        while player.radius >= 15:
+            player.radius -= 1
+            time.sleep(0.1)
+            
+death_message1 = "YOU DIED"
+death_message2 = "Push P to restart"            
+ 
+def render_death(canvas):
+    global lives, list_balls, death_music, true_death, level, death
+    if true_death == True:
+        level = 0
+        lives = 4
+        list_balls = []
+        music.pause()
+        kbd.space = False
+        
+
+    else:
+        death = False
+        lives -= 1
+        list_balls = []
+        generate()
+        new_game()
+        
+frame = simplegui.create_frame('Interactions', WIDTH, HEIGHT)
+frame.set_draw_handler(draw)
+frame.set_keydown_handler(kbd.keyDown)
+frame.set_keyup_handler(kbd.keyUp)
+frame.start()
